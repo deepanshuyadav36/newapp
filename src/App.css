@@ -329,3 +329,19 @@ button:active{ transform: translateY(1px); }
   .heroTitle{ font-size: 40px; }
   .stats{ grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
+/* Hover effect for inputs */
+.authCard input:hover{
+  border-color: rgba(59,130,246,0.35);
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.08);
+}
+
+/* Strong focus effect (when you click typing) */
+.authCard input:focus{
+  border-color: rgba(59,130,246,0.55);
+  box-shadow: 0 0 0 5px rgba(59,130,246,0.16);
+}
+.authCard input,
+.primaryWide,
+.secondaryWide{
+  transition: all 0.18s ease;
+}
