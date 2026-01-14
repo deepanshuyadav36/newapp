@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "./supabaseClient";
+import "./App.css";
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -77,10 +78,7 @@ export default function App() {
 
   async function signIn() {
     setMsg("");
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) setMsg(error.message);
   }
 
@@ -139,16 +137,12 @@ export default function App() {
     if (!next) return;
 
     setMsg("");
-    const { error } = await supabase
-      .from("tasks")
-      .update({ title: next })
-      .eq("id", id);
+    const { error } = await supabase.from("tasks").update({ title: next }).eq("id", id);
 
     if (error) setMsg(error.message);
     else cancelEdit();
   }
 
-  // dashboard stats
   const stats = useMemo(() => {
     const total = tasks.length;
     const done = tasks.filter((t) => t.is_done).length;
@@ -157,7 +151,6 @@ export default function App() {
     return { total, done, pending, percent };
   }, [tasks]);
 
-  // search + filter list
   const visibleTasks = useMemo(() => {
     const q = query.trim().toLowerCase();
 
@@ -171,183 +164,177 @@ export default function App() {
   }, [tasks, query, filter]);
 
   return (
-    <div
-      style={{
-        maxWidth: 760,
-        margin: "40px auto",
-        fontFamily: "system-ui",
-        padding: 16,
-      }}
-    >
-      <h2 style={{ marginBottom: 6 }}>Supabase Tasks</h2>
+    <div className="container">
+      <div className="header">
+        <div>
+          <h1 className="title">Supabase Tasks</h1>
+          <p className="sub">Auth • Postgres • RLS • Realtime • CRUD • Search • Edit</p>
+        </div>
 
-      {msg ? (
-        <p style={{ padding: 10, background: "#eee", borderRadius: 8, marginTop: 10 }}>
-          {msg}
-        </p>
-      ) : null}
+        {session ? (
+          <div className="badge">
+            <span className="muted">Logged in:</span>
+            <b>{session.user.email}</b>
+          </div>
+        ) : null}
+      </div>
+
+      {msg ? <div className="msg">{msg}</div> : null}
 
       {!session ? (
-        <div style={{ display: "grid", gap: 10, marginTop: 16, maxWidth: 420 }}>
-          <input
-            placeholder="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input
-            placeholder="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+        <div className="card" style={{ marginTop: 16 }}>
+          <div className="section">
+            <div className="row">
+              <input
+                style={{ flex: 1, minWidth: 220 }}
+                placeholder="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <input
+                style={{ flex: 1, minWidth: 220 }}
+                placeholder="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-          <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={signIn}>Login</button>
-            <button onClick={signUp}>Signup</button>
+            <div className="row" style={{ marginTop: 12 }}>
+              <button className="primary" onClick={signIn}>
+                Login
+              </button>
+              <button onClick={signUp}>Signup</button>
+            </div>
+
+            <p className="sub" style={{ marginTop: 12 }}>
+              Tip: use Gmail plus trick for 2nd user: <b>yourmail+2@gmail.com</b>
+            </p>
           </div>
-
-          <p style={{ fontSize: 13, opacity: 0.8 }}>
-            Tip: keep a strong password (e.g., Test@12345).
-          </p>
         </div>
       ) : (
-        <>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <p style={{ margin: 0 }}>
-              Logged in: <b>{session.user.email}</b>
-            </p>
-            <button onClick={signOut}>Logout</button>
-          </div>
+        <div className="card" style={{ marginTop: 16 }}>
+          <div className="section">
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <div className="badge">
+                <span className="muted">Security:</span>
+                <span>RLS ensures each user only sees their own tasks</span>
+              </div>
+              <button onClick={signOut}>Logout</button>
+            </div>
 
-          {/* Dashboard */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-              gap: 10,
-              marginTop: 16,
-            }}
-          >
-            <StatCard label="Total" value={stats.total} />
-            <StatCard label="Done" value={stats.done} />
-            <StatCard label="Pending" value={stats.pending} />
-            <StatCard label="Completion" value={`${stats.percent}%`} />
-          </div>
+            <div className="stats">
+              <StatCard label="Total" value={stats.total} />
+              <StatCard label="Done" value={stats.done} />
+              <StatCard label="Pending" value={stats.pending} />
+              <StatCard label="Completion" value={`${stats.percent}%`} />
+            </div>
 
-          {/* Add */}
-          <form onSubmit={addTask} style={{ marginTop: 16, display: "flex", gap: 8 }}>
-            <input
-              placeholder="New task..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <button type="submit">Add</button>
-          </form>
+            <hr className="sep" style={{ marginTop: 16 }} />
 
-          {/* Search + Filter */}
-          <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
-            <input
-              placeholder="Search tasks..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              style={{ flex: 1, minWidth: 220 }}
-            />
+            <form onSubmit={addTask} className="row" style={{ marginTop: 16 }}>
+              <input
+                style={{ flex: 1, minWidth: 240 }}
+                placeholder="New task..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+              <button className="primary" type="submit">
+                Add
+              </button>
+            </form>
 
-            <div style={{ display: "flex", gap: 8 }}>
+            <div className="row" style={{ marginTop: 12 }}>
+              <input
+                style={{ flex: 1, minWidth: 240 }}
+                placeholder="Search tasks..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+
               <button
-                onClick={() => setFilter("all")}
-                style={pillStyle(filter === "all")}
+                className={`pill ${filter === "all" ? "active" : ""}`}
                 type="button"
+                onClick={() => setFilter("all")}
               >
                 All
               </button>
               <button
-                onClick={() => setFilter("pending")}
-                style={pillStyle(filter === "pending")}
+                className={`pill ${filter === "pending" ? "active" : ""}`}
                 type="button"
+                onClick={() => setFilter("pending")}
               >
                 Pending
               </button>
               <button
-                onClick={() => setFilter("done")}
-                style={pillStyle(filter === "done")}
+                className={`pill ${filter === "done" ? "active" : ""}`}
                 type="button"
+                onClick={() => setFilter("done")}
               >
                 Done
               </button>
             </div>
-          </div>
 
-          {/* List */}
-          <div style={{ marginTop: 16 }}>
-            {loading ? <p>Loading...</p> : null}
+            <div style={{ marginTop: 16 }}>
+              {loading ? <p className="muted">Loading...</p> : null}
 
-            {visibleTasks.length === 0 && !loading ? (
-              <p style={{ opacity: 0.8 }}>No tasks match your search/filter.</p>
-            ) : null}
+              {visibleTasks.length === 0 && !loading ? (
+                <p className="muted">No tasks match your search/filter.</p>
+              ) : null}
 
-            {visibleTasks.map((t) => {
-              const isEditing = editingId === t.id;
+              {visibleTasks.map((t) => {
+                const isEditing = editingId === t.id;
 
-              return (
-                <div
-                  key={t.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: 12,
-                    border: "1px solid #ddd",
-                    borderRadius: 12,
-                    marginTop: 10,
-                    gap: 10,
-                  }}
-                >
-                  <div style={{ display: "flex", gap: 10, alignItems: "center", flex: 1 }}>
-                    <input type="checkbox" checked={t.is_done} onChange={() => toggleDone(t)} />
+                return (
+                  <div className="task" key={t.id}>
+                    <div className="taskLeft">
+                      <input type="checkbox" checked={t.is_done} onChange={() => toggleDone(t)} />
+
+                      {!isEditing ? (
+                        <span
+                          className="taskTitle"
+                          style={{ textDecoration: t.is_done ? "line-through" : "none" }}
+                        >
+                          {t.title}
+                        </span>
+                      ) : (
+                        <input
+                          style={{ flex: 1 }}
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                        />
+                      )}
+                    </div>
 
                     {!isEditing ? (
-                      <span style={{ textDecoration: t.is_done ? "line-through" : "none" }}>
-                        {t.title}
-                      </span>
+                      <div className="row" style={{ gap: 8 }}>
+                        <button type="button" onClick={() => startEdit(t)}>
+                          Edit
+                        </button>
+                        <button
+                          className="danger"
+                          type="button"
+                          onClick={() => deleteTask(t.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     ) : (
-                      <input
-                        value={editingTitle}
-                        onChange={(e) => setEditingTitle(e.target.value)}
-                        style={{ flex: 1 }}
-                      />
+                      <div className="row" style={{ gap: 8 }}>
+                        <button className="primary" type="button" onClick={() => saveEdit(t.id)}>
+                          Save
+                        </button>
+                        <button type="button" onClick={cancelEdit}>
+                          Cancel
+                        </button>
+                      </div>
                     )}
                   </div>
-
-                  {!isEditing ? (
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button type="button" onClick={() => startEdit(t)}>
-                        Edit
-                      </button>
-                      <button type="button" onClick={() => deleteTask(t.id)}>
-                        Delete
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button type="button" onClick={() => saveEdit(t.id)}>
-                        Save
-                      </button>
-                      <button type="button" onClick={cancelEdit}>
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-
-          <p style={{ fontSize: 13, opacity: 0.75, marginTop: 18 }}>
-            Security: RLS ensures each user only accesses their own tasks (user_id = auth.uid()).
-          </p>
-        </>
+        </div>
       )}
     </div>
   );
@@ -355,19 +342,9 @@ export default function App() {
 
 function StatCard({ label, value }) {
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 12 }}>
-      <div style={{ fontSize: 13, opacity: 0.8 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>{value}</div>
+    <div className="stat">
+      <div className="label">{label}</div>
+      <div className="value">{value}</div>
     </div>
   );
-}
-
-function pillStyle(active) {
-  return {
-    padding: "8px 12px",
-    borderRadius: 999,
-    border: "1px solid #ddd",
-    background: active ? "#e9e9e9" : "transparent",
-    cursor: "pointer",
-  };
 }
