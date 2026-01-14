@@ -16,11 +16,11 @@ export default function App() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // NEW: search + filter
+  // search + filter
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all"); // all | pending | done
 
-  // NEW: edit state
+  // edit state
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
 
@@ -77,7 +77,10 @@ export default function App() {
 
   async function signIn() {
     setMsg("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (error) setMsg(error.message);
   }
 
@@ -121,31 +124,31 @@ export default function App() {
     if (error) setMsg(error.message);
   }
 
-  // NEW: start edit
   function startEdit(task) {
     setEditingId(task.id);
     setEditingTitle(task.title);
   }
 
-  // NEW: cancel edit
   function cancelEdit() {
     setEditingId(null);
     setEditingTitle("");
   }
 
-  // NEW: save edit
   async function saveEdit(id) {
     const next = editingTitle.trim();
     if (!next) return;
 
     setMsg("");
-    const { error } = await supabase.from("tasks").update({ title: next }).eq("id", id);
+    const { error } = await supabase
+      .from("tasks")
+      .update({ title: next })
+      .eq("id", id);
 
     if (error) setMsg(error.message);
     else cancelEdit();
   }
 
-  // NEW: dashboard stats
+  // dashboard stats
   const stats = useMemo(() => {
     const total = tasks.length;
     const done = tasks.filter((t) => t.is_done).length;
@@ -154,7 +157,7 @@ export default function App() {
     return { total, done, pending, percent };
   }, [tasks]);
 
-  // NEW: search + filter list
+  // search + filter list
   const visibleTasks = useMemo(() => {
     const q = query.trim().toLowerCase();
 
@@ -168,16 +171,29 @@ export default function App() {
   }, [tasks, query, filter]);
 
   return (
-    <div style={{ maxWidth: 760, margin: "40px auto", fontFamily: "system-ui", padding: 16 }}>
+    <div
+      style={{
+        maxWidth: 760,
+        margin: "40px auto",
+        fontFamily: "system-ui",
+        padding: 16,
+      }}
+    >
       <h2 style={{ marginBottom: 6 }}>Supabase Tasks</h2>
 
       {msg ? (
-        <p style={{ padding: 10, background: "#eee", borderRadius: 8, marginTop: 10 }}>{msg}</p>
+        <p style={{ padding: 10, background: "#eee", borderRadius: 8, marginTop: 10 }}>
+          {msg}
+        </p>
       ) : null}
 
       {!session ? (
         <div style={{ display: "grid", gap: 10, marginTop: 16, maxWidth: 420 }}>
-          <input placeholder="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input
+            placeholder="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
           <input
             placeholder="password"
             type="password"
@@ -197,7 +213,9 @@ export default function App() {
       ) : (
         <>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <p style={{ margin: 0 }}>Logged in: <b>{session.user.email}</b></p>
+            <p style={{ margin: 0 }}>
+              Logged in: <b>{session.user.email}</b>
+            </p>
             <button onClick={signOut}>Logout</button>
           </div>
 
@@ -287,11 +305,7 @@ export default function App() {
                   }}
                 >
                   <div style={{ display: "flex", gap: 10, alignItems: "center", flex: 1 }}>
-                    <input
-                      type="checkbox"
-                      checked={t.is_done}
-                      onChange={() => toggleDone(t)}
-                    />
+                    <input type="checkbox" checked={t.is_done} onChange={() => toggleDone(t)} />
 
                     {!isEditing ? (
                       <span style={{ textDecoration: t.is_done ? "line-through" : "none" }}>
@@ -320,4 +334,40 @@ export default function App() {
                       <button type="button" onClick={() => saveEdit(t.id)}>
                         Save
                       </button>
-                      <button type="button" onClick={cancelEdit
+                      <button type="button" onClick={cancelEdit}>
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <p style={{ fontSize: 13, opacity: 0.75, marginTop: 18 }}>
+            Security: RLS ensures each user only accesses their own tasks (user_id = auth.uid()).
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+function StatCard({ label, value }) {
+  return (
+    <div style={{ border: "1px solid #ddd", borderRadius: 12, padding: 12 }}>
+      <div style={{ fontSize: 13, opacity: 0.8 }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>{value}</div>
+    </div>
+  );
+}
+
+function pillStyle(active) {
+  return {
+    padding: "8px 12px",
+    borderRadius: 999,
+    border: "1px solid #ddd",
+    background: active ? "#e9e9e9" : "transparent",
+    cursor: "pointer",
+  };
+}
