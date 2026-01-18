@@ -73,7 +73,7 @@ export default function App() {
     setMsg("");
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) setMsg(error.message);
-    else setMsg("Signup done. Now login.");
+    else setMsg("Signup done. Please check email (if required), then login.");
   }
 
   async function signIn() {
@@ -143,6 +143,7 @@ export default function App() {
     else cancelEdit();
   }
 
+  // stats
   const stats = useMemo(() => {
     const total = tasks.length;
     const done = tasks.filter((t) => t.is_done).length;
@@ -151,155 +152,204 @@ export default function App() {
     return { total, done, pending, percent };
   }, [tasks]);
 
+  // visible list
   const visibleTasks = useMemo(() => {
     const q = query.trim().toLowerCase();
-
     return tasks.filter((t) => {
       const matchesQuery = q ? t.title.toLowerCase().includes(q) : true;
       const matchesFilter =
         filter === "all" ? true : filter === "done" ? t.is_done : !t.is_done;
-
       return matchesQuery && matchesFilter;
     });
   }, [tasks, query, filter]);
 
-  return (
-    <div className="container">
-      <div className="header">
-        <div>
-          <h1 className="title">Supabase Tasks</h1>
-          <p className="sub">Auth • Postgres • RLS • Realtime • CRUD • Search • Edit</p>
-        </div>
+  // AUTH PAGE (same app, pro UI)
+  if (!session) {
+    return (
+      <div className="authWrap">
+        <div className="authCard2">
+          <div className="authLeft2">
+            <div className="brand">
+              <div className="brandDot" />
+              <div>
+                <div className="brandName">Deepanshu</div>
+                <div className="brandSub">Supabase Dashboard Demo</div>
+              </div>
+            </div>
 
-        {session ? (
-          <div className="badge">
-            <span className="muted">Logged in:</span>
-            <b>{session.user.email}</b>
+            <h1 className="hero">Welcome 👋</h1>
+            <p className="heroP">
+              A clean tasks dashboard built with React + Supabase (Auth, RLS, Realtime).
+            </p>
+
+            <div className="chips">
+              <span className="chip">Auth</span>
+              <span className="chip">Postgres</span>
+              <span className="chip">RLS</span>
+              <span className="chip">Realtime</span>
+              <span className="chip">CRUD</span>
+            </div>
+
+            <a className="ghost" href="https://supabase.com" target="_blank" rel="noreferrer">
+              Learn Supabase →
+            </a>
           </div>
-        ) : null}
-      </div>
 
-      {msg ? <div className="msg">{msg}</div> : null}
+          <div className="authRight2">
+            <div className="panel">
+              <h3 className="panelTitle">Login to continue</h3>
 
-      {!session ? (
-        <div className="card" style={{ marginTop: 16 }}>
-          <div className="section">
-            <div className="row">
+              {msg ? <div className="toast">{msg}</div> : null}
+
+              <label className="lbl">Email</label>
               <input
-                style={{ flex: 1, minWidth: 220 }}
-                placeholder="email"
+                className="in"
+                placeholder="name@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
+
+              <label className="lbl">Password</label>
               <input
-                style={{ flex: 1, minWidth: 220 }}
-                placeholder="password"
+                className="in"
+                placeholder="••••••••"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-            </div>
 
-            <div className="row" style={{ marginTop: 12 }}>
-              <button className="primary" onClick={signIn}>
-                Login
-              </button>
-              <button onClick={signUp}>Signup</button>
-            </div>
+              <div className="btnRow">
+                <button className="btnPrimary" onClick={signIn}>
+                  Login
+                </button>
+                <button className="btnSecondary" onClick={signUp}>
+                  Sign up
+                </button>
+              </div>
 
-            <p className="sub" style={{ marginTop: 12 }}>
-              Tip: use Gmail plus trick for 2nd user: <b>yourmail+2@gmail.com</b>
-            </p>
+              <p className="hint">
+                Tip: for 2nd user, use Gmail plus trick: <b>yourmail+2@gmail.com</b>
+              </p>
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="card" style={{ marginTop: 16 }}>
-          <div className="section">
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <div className="badge">
-                <span className="muted">Security:</span>
-                <span>RLS ensures each user only sees their own tasks</span>
-              </div>
-              <button onClick={signOut}>Logout</button>
-            </div>
+      </div>
+    );
+  }
 
-            <div className="stats">
-              <StatCard label="Total" value={stats.total} />
-              <StatCard label="Done" value={stats.done} />
-              <StatCard label="Pending" value={stats.pending} />
-              <StatCard label="Completion" value={`${stats.percent}%`} />
-            </div>
+  // DASHBOARD PAGE
+  return (
+    <div className="appShell">
+      {/* Sidebar */}
+      <aside className="side">
+        <div className="profile">
+          <div className="avatar">{(session.user.email || "U")[0].toUpperCase()}</div>
+          <div>
+            <div className="pName">{session.user.email.split("@")[0]}</div>
+            <div className="pMail">{session.user.email}</div>
+          </div>
+        </div>
 
-            <hr className="sep" style={{ marginTop: 16 }} />
+        <nav className="nav">
+          <div className="navItem active">Dashboard</div>
+          <div className="navItem">Tasks</div>
+          <div className="navItem">Analytics</div>
+          <div className="navItem">Settings</div>
+        </nav>
 
-            <form onSubmit={addTask} className="row" style={{ marginTop: 16 }}>
-              <input
-                style={{ flex: 1, minWidth: 240 }}
-                placeholder="New task..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-              <button className="primary" type="submit">
-                Add
-              </button>
-            </form>
+        <button className="logoutBtn" onClick={signOut}>
+          Logout
+        </button>
+      </aside>
 
-            <div className="row" style={{ marginTop: 12 }}>
-              <input
-                style={{ flex: 1, minWidth: 240 }}
-                placeholder="Search tasks..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
+      {/* Main */}
+      <main className="main">
+        <div className="topbar">
+          <div>
+            <div className="hTitle">Tasks Dashboard</div>
+            <div className="hSub">Search, filter, edit — with Supabase Realtime.</div>
+          </div>
 
+          <div className="topRight">
+            <input
+              className="search"
+              placeholder="Search tasks..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="filters">
               <button
-                className={`pill ${filter === "all" ? "active" : ""}`}
-                type="button"
+                className={`pill ${filter === "all" ? "pillOn" : ""}`}
                 onClick={() => setFilter("all")}
+                type="button"
               >
                 All
               </button>
               <button
-                className={`pill ${filter === "pending" ? "active" : ""}`}
-                type="button"
+                className={`pill ${filter === "pending" ? "pillOn" : ""}`}
                 onClick={() => setFilter("pending")}
+                type="button"
               >
                 Pending
               </button>
               <button
-                className={`pill ${filter === "done" ? "active" : ""}`}
-                type="button"
+                className={`pill ${filter === "done" ? "pillOn" : ""}`}
                 onClick={() => setFilter("done")}
+                type="button"
               >
                 Done
               </button>
             </div>
+          </div>
+        </div>
 
-            <div style={{ marginTop: 16 }}>
-              {loading ? <p className="muted">Loading...</p> : null}
+        {msg ? <div className="toast">{msg}</div> : null}
 
-              {visibleTasks.length === 0 && !loading ? (
-                <p className="muted">No tasks match your search/filter.</p>
+        <div className="grid">
+          {/* Center card */}
+          <section className="cardBig">
+            <div className="cardHead">
+              <div>
+                <div className="cardTitle">Your Tasks</div>
+                <div className="cardSub">Add, update, edit and delete tasks.</div>
+              </div>
+
+              <form className="addRow" onSubmit={addTask}>
+                <input
+                  className="in"
+                  placeholder="New task..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+                <button className="btnPrimary" type="submit">
+                  Add
+                </button>
+              </form>
+            </div>
+
+            <div className="list">
+              {loading ? <div className="loading">Loading...</div> : null}
+
+              {!loading && visibleTasks.length === 0 ? (
+                <div className="empty">No tasks match your search/filter.</div>
               ) : null}
 
               {visibleTasks.map((t) => {
                 const isEditing = editingId === t.id;
 
                 return (
-                  <div className="task" key={t.id}>
+                  <div className="taskRow" key={t.id}>
                     <div className="taskLeft">
-                      <input type="checkbox" checked={t.is_done} onChange={() => toggleDone(t)} />
-
+                      <input
+                        type="checkbox"
+                        checked={t.is_done}
+                        onChange={() => toggleDone(t)}
+                      />
                       {!isEditing ? (
-                        <span
-                          className="taskTitle"
-                          style={{ textDecoration: t.is_done ? "line-through" : "none" }}
-                        >
-                          {t.title}
-                        </span>
+                        <div className={`taskText ${t.is_done ? "done" : ""}`}>{t.title}</div>
                       ) : (
                         <input
-                          style={{ flex: 1 }}
+                          className="in"
                           value={editingTitle}
                           onChange={(e) => setEditingTitle(e.target.value)}
                         />
@@ -307,12 +357,12 @@ export default function App() {
                     </div>
 
                     {!isEditing ? (
-                      <div className="row" style={{ gap: 8 }}>
-                        <button type="button" onClick={() => startEdit(t)}>
+                      <div className="taskBtns">
+                        <button className="btnMini" type="button" onClick={() => startEdit(t)}>
                           Edit
                         </button>
                         <button
-                          className="danger"
+                          className="btnMini dangerMini"
                           type="button"
                           onClick={() => deleteTask(t.id)}
                         >
@@ -320,11 +370,11 @@ export default function App() {
                         </button>
                       </div>
                     ) : (
-                      <div className="row" style={{ gap: 8 }}>
-                        <button className="primary" type="button" onClick={() => saveEdit(t.id)}>
+                      <div className="taskBtns">
+                        <button className="btnMini" type="button" onClick={() => saveEdit(t.id)}>
                           Save
                         </button>
-                        <button type="button" onClick={cancelEdit}>
+                        <button className="btnMini" type="button" onClick={cancelEdit}>
                           Cancel
                         </button>
                       </div>
@@ -333,18 +383,38 @@ export default function App() {
                 );
               })}
             </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+          </section>
 
-function StatCard({ label, value }) {
-  return (
-    <div className="stat">
-      <div className="label">{label}</div>
-      <div className="value">{value}</div>
+          {/* Right stats */}
+          <aside className="cardSide">
+            <div className="statBox">
+              <div className="statLabel">Total</div>
+              <div className="statVal">{stats.total}</div>
+            </div>
+            <div className="statBox">
+              <div className="statLabel">Done</div>
+              <div className="statVal">{stats.done}</div>
+            </div>
+            <div className="statBox">
+              <div className="statLabel">Pending</div>
+              <div className="statVal">{stats.pending}</div>
+            </div>
+            <div className="statBox">
+              <div className="statLabel">Completion</div>
+              <div className="statVal">{stats.percent}%</div>
+            </div>
+
+            <div className="tipCard">
+              <div className="tipTitle">Security</div>
+              <div className="tipText">
+                RLS ensures each user only accesses their own rows:
+                <br />
+                <code>user_id = auth.uid()</code>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
     </div>
   );
 }
